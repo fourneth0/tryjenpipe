@@ -41,7 +41,7 @@ pipeline {
            steps {
                 git url: env.REPO_URL,
                     credentialsId: env.ACCESS_TOKEN,
-                    branch: env.TARGET_BRANCH
+                    branch: env.TARGET_BRANCH,
                     changelog: true
                 sh 'npm install'
                 sh 'npm test:integration:staging'
