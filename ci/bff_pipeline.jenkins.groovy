@@ -61,6 +61,12 @@ pipeline {
            }
         }
 
+        stage('prmote to stag') {
+            steps {
+                sh ''' node -e "require('./ci/ci_util_integrator.js').promoteBranch()" '''
+            }
+        }
+
 
         stage('Verify staging promosion') {
             
