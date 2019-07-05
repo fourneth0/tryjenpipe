@@ -13,13 +13,11 @@ module.exports = {
         util.promoteBranch({
             accessToken,
             reviewAccessToken,
-            logger,
             reviewerLoginName,
             repository,
             owner,
             sourceBranch,
             targetBranch,
-            timeout = 30,
         })
     },
 
