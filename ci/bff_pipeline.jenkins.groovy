@@ -62,9 +62,6 @@ pipeline {
            }
         }
 
-        stage('Promote develop to staging') {
-           
-        }
 
         stage('Verify staging promosion') {
             
