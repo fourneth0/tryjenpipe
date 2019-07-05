@@ -64,7 +64,7 @@ pipeline {
 
         stage('Promote develop to staging') {
             steps {
-                sh ''' node -e "require('./ci/ci_util_integrator.js').isThereADelta()" '''
+                
                 }
         }
 

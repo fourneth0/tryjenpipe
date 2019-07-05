@@ -56,7 +56,7 @@ async function isThereADeltaToMerge(args) {
     sourceBranch,
     targetBranch
   } = args;
-  validateInputs()
+  validateInputs(args);
   const api = apiKit({ auth: accessToken });
   const response = await api.repos.compareCommits({
     base: sourceBranch,
