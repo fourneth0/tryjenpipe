@@ -71,7 +71,7 @@ pipeline {
                     branch: env.TARGET_BRANCH, 
                     changelog: true
                 sh 'npm install'
-                sh 'npm test:integration:qa'
+                sh 'npm test:integration:staging'
             }
             // todo revert if integration failed,
             // todo send notifications
