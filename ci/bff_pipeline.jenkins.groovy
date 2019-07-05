@@ -11,6 +11,7 @@ pipeline {
         TARGET_BRANCH = 'staging'
         REVIEWER_LOGIN_NAME = 'ANTHONY'
 	}
+    tools { nodejs "node" }
     triggers {
 	   // Execute every day at 9pm
        cron('0 21 * * *')
@@ -24,7 +25,7 @@ pipeline {
                sh 'npm install'
                     script {
                         env.IS_MERGE_REQUIRED = sh(script: '''
-                                node -e "require('./ci/ci_util_integrator.js').isThereADelta()"
+                                node -e "require('./ci/ci_util_integrator.js').isThereADeltaToMerge()"
                             ''', returnStdout: true).trim()
 
                         if (env.IS_MERGE_REQUIRED == 'false') {
@@ -44,7 +45,7 @@ pipeline {
                     branch: env.TARGET_BRANCH,
                     changelog: true
                 sh 'npm install'
-                sh 'npm test:integration:staging'
+                sh 'npm run test:integration:staging'
            }
         }
 
@@ -57,15 +58,10 @@ pipeline {
                     changelog: true
                 sh 'npm install'
                 sh 'npm test'
-                sh 'npm test:integration:qa'
+                sh 'npm run test:integration:qa'
            }
         }
 
-        stage('Promote develop to staging') {
-            steps {
-                sh ''' node -e "require('./ci/ci_util_integrator.js').isThereADelta()" '''
-                }
-        }
 
         stage('Verify staging promosion') {
             
@@ -75,7 +71,7 @@ pipeline {
                     branch: env.TARGET_BRANCH, 
                     changelog: true
                 sh 'npm install'
-                sh 'npm test:integration:qa'
+                sh 'npm run test:integration:staging'
             }
             // todo revert if integration failed,
             // todo send notifications
