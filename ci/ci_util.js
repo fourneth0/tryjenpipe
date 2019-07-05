@@ -134,15 +134,19 @@ async function createPR({
   targetBranch,
 }) {
   // create PR https://developer.github.com/v3/pulls/#create-a-pull-request
-  const resp = await api.pulls.create({
-    owner,
-    repo: repository,
-    title: prName,
-    head: sourceBranch,
-    base: targetBranch
-  });
-  logger(`PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`);
-  return resp.data;
+  try {
+    const resp = await api.pulls.create({
+      owner,
+      repo: repository,
+      title: prName,
+      head: sourceBranch,
+      base: targetBranch
+    });
+    logger(`PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`);
+    return resp.data;
+  } catch(e) {
+    throw Error('PR Creation failed', e);
+  }
 }
 
 async function isJenkinsBuildCompleted({
