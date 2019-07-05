@@ -90,7 +90,7 @@ async function approveAndMerge({ headSha, logger, owner, pullNumber, repository,
 function validateInputs(args) {
   assert(args);
   assert(typeof args === 'object', 'expect as an object but was ' + JSON.stringify(args));
-  args.keys().forEach(k => {
+  Object.keys(args).forEach(k => {
     assert(args[k], `expect ${k}, but was ${args[k]}`)
   })
 }
