@@ -65,7 +65,7 @@ pipeline {
             steps {
                 sh (
                     label: 'running promote js task',
-                    script: ''' node -e "require('./ci/ci_util_integrator.js').promoteBranch()" ''',
+                    script: '''node -e "require('./ci/ci_util_integrator.js').promoteBranch()" ''',
                     returnStatus: true,
                     returnStdout: true
                 )

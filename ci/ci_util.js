@@ -186,7 +186,7 @@ async function approvePR({
   reviewerLoginName,
 }) {
   const existingReview = await findExistingReview({ 
-    owner, pullNumber, repo: repository, reviewAPI, reviewerLoginName 
+    owner, pullNumber, repository, reviewAPI, reviewerLoginName 
   });
   let reviewId;
   if (!existingReview) {
