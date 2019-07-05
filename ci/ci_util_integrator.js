@@ -9,7 +9,8 @@ const sourceBranch = process.env.SOURCE_BRANCH;
 const targetBranch = process.env.TARGET_BRANCH;
 const reviewerLoginName = process.env.REVIEWER_LOGIN_NAME;
 
-console.log('util ', util);
+// crash the process in case of an error
+process.on('unhandledRejection', up => { throw up })
 
 module.exports = {
     promoteBranch: () => {
