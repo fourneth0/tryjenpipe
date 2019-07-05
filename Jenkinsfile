@@ -2,7 +2,7 @@ pipeline {
 
     agent any
 
-    tools {nodejs "node 12.6"}
+    tools {nodejs "node"}
     
     stages {
         stage('dep install') {
