@@ -8,7 +8,9 @@
     "lint": "echo 'linting'",
     "test:unit": "echo 'unit testing'",
     "test:supertest": "echo 'supertest'",
-    "test:integration:local": "echo 'local integration tests'"
+    "test:integration:local": "echo 'local integration tests'",
+    "test:integration:qa": "echo 'qa integration tests'",
+    "test:integration:staging": "echo 'staging integration tests'"
   },
   "repository": {
     "type": "git",
@@ -21,7 +23,8 @@
   },
   "homepage": "https://github.com/fourneth0/tryjenpipe#readme",
   "devDependencies": {
-    "@octokit/rest": "^16.28.2"
+    "@octokit/rest": "^16.28.2",
+    "jest": "^24.8.0"
   },
   "dependencies": {
     "request": "^2.88.0",
