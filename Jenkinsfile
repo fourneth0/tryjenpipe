@@ -1,10 +1,12 @@
 pipeline {
+
     agent any
-    tools {nodejs "node 12.6"}
+
+    tools {nodejs "node"}
+    
     stages {
         stage('dep install') {
             steps {
-                //sh 'export PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin'
                 sh 'npm install'
             }
         }
