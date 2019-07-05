@@ -22,19 +22,18 @@ pipeline {
     stages {
         stage('Check for changes') {
            steps {
-               sh 'npm install'
-                    script {
-                        env.IS_MERGE_REQUIRED = sh(script: '''
-                                node -e "require('./ci/ci_util_integrator.js').isThereADeltaToMerge()"
-                            ''', returnStdout: true).trim()
+                script {
+                    env.IS_MERGE_REQUIRED = sh(script: '''
+                            node -e "require('./ci/ci_util_integrator.js').isThereADeltaToMerge()"
+                        ''', returnStdout: true).trim()
 
-                        if (env.IS_MERGE_REQUIRED == 'false') {
-                            echo 'Branch is upto date, end the build'
-                            currentBuild.result = 'ABORTED'
-                            error('No SCM changes')
-                            return
-                        }
+                    if (env.IS_MERGE_REQUIRED == 'false') {
+                        echo 'Branch is upto date, end the build'
+                        currentBuild.result = 'ABORTED'
+                        error('No SCM changes')
+                        return
                     }
+                }
                 }
         }
         stage('Assert target env') { // to make sure deployed staging is working as expected
@@ -57,9 +56,15 @@ pipeline {
                     branch: env.SOURCE_BRANCH,
                     changelog: true
                 sh 'npm install'
-                sh 'npm test'
+                // sh 'npm test'
                 sh 'npm run test:integration:qa'
            }
+        }
+
+        stage('prmote to stag') {
+            steps {
+                sh ''' node -e "require('./ci/ci_util_integrator.js').promoteBranch()" '''
+            }
         }
 
 
