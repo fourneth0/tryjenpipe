@@ -1,12 +1,12 @@
 pipeline {
 	agent any
 	environment {
-        REPO_URL = 'https://github.com/sysco-labs-mobile/shop-mobile-bff'
-		SERVER_URL = 'https://shopping-mobile-bff.mysysco.com/health'
+        REPO_URL = 'https://github.com/fourneth0/tryjenpipe.git'
+		SERVER_URL = 'https://deployment.com/health'
         GIT_TOKEN = credentials('git-access-token')
         GIT_PR_REVIEW_TOKEN = credentials('git-pr-review-token')
-        REPO_OWNER = 'sysco-labs-mobile'
-        REPO  = 'shop-mobile-bff'
+        REPO_OWNER = 'fourneth0'
+        REPO  = 'tryjenpipe'
         SOURCE_BRANCH = 'develop'
         TARGET_BRANCH = 'staging'
         REVIEWER_LOGIN_NAME = 'ANTHONY'
