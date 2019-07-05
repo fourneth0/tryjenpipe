@@ -36,54 +36,56 @@ pipeline {
                 }
                 }
         }
-        stage('Assert target env') { // to make sure deployed staging is working as expected
-            // assert sta by running regression suit from staging branch to make sure staging is still functioning
-           steps {
-                git url: env.REPO_URL,
-                    credentialsId: env.ACCESS_TOKEN,
-                    branch: env.TARGET_BRANCH,
-                    changelog: true
-                sh 'npm install'
-                sh 'npm run test:integration:staging'
-           }
-        }
+        // stage('Assert target env') { // to make sure deployed staging is working as expected
+        //     // assert sta by running regression suit from staging branch to make sure staging is still functioning
+        //    steps {
+        //         git url: env.REPO_URL,
+        //             credentialsId: env.ACCESS_TOKEN,
+        //             branch: env.TARGET_BRANCH,
+        //             changelog: true
+        //         sh 'npm install'
+        //         sh 'npm run test:integration:staging'
+        //    }
+        // }
 
-        stage('Verify QA') { // assume develop is already deployed to QA
-            // verify QA by run regression suit from develop branch
-           steps {
-                git url: env.REPO_URL,
-                    credentialsId: env.ACCESS_TOKEN,
-                    branch: env.SOURCE_BRANCH,
-                    changelog: true
-                sh 'npm install'
-                // sh 'npm test'
-                sh 'npm run test:integration:qa'
-           }
-        }
+        // stage('Verify QA') { // assume develop is already deployed to QA
+        //     // verify QA by run regression suit from develop branch
+        //    steps {
+        //         git url: env.REPO_URL,
+        //             credentialsId: env.ACCESS_TOKEN,
+        //             branch: env.SOURCE_BRANCH,
+        //             changelog: true
+        //         sh 'npm install'
+        //         // sh 'npm test'
+        //         sh 'npm run test:integration:qa'
+        //    }
+        // }
 
         stage('prmote to stag') {
             steps {
                 sh (
+                    label: 'running promote js task',
                     script: ''' node -e "require('./ci/ci_util_integrator.js').promoteBranch()" ''',
-                    returnStatus: true
+                    returnStatus: true,
+                    returnStdout: true
                 )
             }
         }
 
 
-        stage('Verify staging promosion') {
+        // stage('Verify staging promosion') {
             
-            steps {
-                git url: env.REPO_URL, 
-                    credentialsId: env.ACCESS_TOKEN, 
-                    branch: env.TARGET_BRANCH, 
-                    changelog: true
-                sh 'npm install'
-                sh 'npm run test:integration:staging'
-            }
-            // todo revert if integration failed,
-            // todo send notifications
-        }
+        //     steps {
+        //         git url: env.REPO_URL, 
+        //             credentialsId: env.ACCESS_TOKEN, 
+        //             branch: env.TARGET_BRANCH, 
+        //             changelog: true
+        //         sh 'npm install'
+        //         sh 'npm run test:integration:staging'
+        //     }
+        //     // todo revert if integration failed,
+        //     // todo send notifications
+        // }
     }
     post {
         aborted {
