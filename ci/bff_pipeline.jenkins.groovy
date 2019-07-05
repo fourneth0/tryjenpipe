@@ -11,6 +11,7 @@ pipeline {
         TARGET_BRANCH = 'staging'
         REVIEWER_LOGIN_NAME = 'ANTHONY'
 	}
+    tools { nodejs "node" }
     triggers {
 	   // Execute every day at 9pm
        cron('0 21 * * *')
