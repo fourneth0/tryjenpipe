@@ -25,7 +25,7 @@ pipeline {
                sh 'npm install'
                     script {
                         env.IS_MERGE_REQUIRED = sh(script: '''
-                                node -e "require('./ci/ci_util_integrator.js').isThereADelta()"
+                                node -e "require('./ci/ci_util_integrator.js').isThereADeltaToMerge()"
                             ''', returnStdout: true).trim()
 
                         if (env.IS_MERGE_REQUIRED == 'false') {

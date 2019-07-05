@@ -8,6 +8,9 @@ const repository = process.env.REPO;
 const sourceBranch = process.env.SOURCE_BRANCH;
 const targetBranch = process.env.TARGET_BRANCH;
 const reviewerLoginName = process.env.REVIEWER_LOGIN_NAME;
+
+console.log('util ', util);
+
 module.exports = {
     promoteBranch: () => {
         util.promoteBranch({
@@ -21,8 +24,8 @@ module.exports = {
         })
     },
 
-    isThereADelta: () => {
-        util.isThereADelta({
+    isThereADeltaToMerge: () => {
+        util.isThereADeltaToMerge({
             accessToken,
             owner,
             repository,
