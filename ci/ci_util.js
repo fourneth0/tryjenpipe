@@ -32,10 +32,10 @@ async function promoteBranch(args) {
 
   logger(`Starting branch promotion. PR name: ${prName}`);
 
-  const { id: pullNumber, head: { sha: headSha }, url }
-    = await createPR({ api, logger, owner, prName, repository, sourceBranch, targetBranch });
+  const { number: pullNumber, head: { sha: headSha }, url }
+    = await createANewPR({ api, logger, owner, prName, repository, sourceBranch, targetBranch });
   await waitTillBuildComplete({ api, headSha, logger, owner, repository, timeout });
-  const isBuildSuccess = await isJenkinsBuildSuccess({ api, headSha, owner, repository });
+  const isBuildSuccess = await isJenkinsBuildSuccess({ api, headSha, logger, owner, repository });
 
   if (isBuildSuccess) {
     await approveAndMerge({ headSha, logger, owner, pullNumber, repository, reviewAPI, reviewerLoginName, sourceBranch, targetBranch });
@@ -115,16 +115,16 @@ async function waitTillBuildComplete({
   repository,
   timeout
 }) {
-  let isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, owner, repository });
+  let isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   while (!isBuildCompleted) {
     logger(`build is not completed awaiting ${timeout} seconds`);
     await sleep(timeout);
-    isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, owner, repository });
+    isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   }
-  logger('build status found.');
+  logger('build status complete for sha', headSha);
 }
 
-async function createPR({
+async function createANewPR({
   api,
   logger,
   owner,
@@ -133,25 +133,24 @@ async function createPR({
   sourceBranch,
   targetBranch,
 }) {
-  // create PR https://developer.github.com/v3/pulls/#create-a-pull-request
-  try {
-    const resp = await api.pulls.create({
-      owner,
-      repo: repository,
-      title: prName,
-      head: sourceBranch,
-      base: targetBranch
-    });
-    logger(`PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`);
-    return resp.data;
-  } catch(e) {
-    throw Error('PR Creation failed', e);
-  }
-}
+  logger('create pr with name: ', prName)
+     const resp = await api.pulls.create({
+       owner,
+       repo: repository,
+       title: prName,
+       head: sourceBranch,
+       base: targetBranch
+     });
+     logger(
+       `PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`, resp
+     );
+     return resp.data;
+   }
 
 async function isJenkinsBuildCompleted({
   api,
   headSha,
+  logger,
   owner,
   repository,
 }) {
@@ -160,20 +159,24 @@ async function isJenkinsBuildCompleted({
   });
   const hasBuildStatusRecorded = statuses.data.length > 0;
   if (!hasBuildStatusRecorded) {
+    console.log('Couldnt find build status for sha', headSha)
     return false;
   }
+  logger(`build status for sha ${headSha} is`, statuses);
   return statuses.data[0].state !== 'pending';
 }
 
 async function isJenkinsBuildSuccess({
   api,
   headSha,
+  logger,
   owner,
   repository,
 }) {
   const statuses = await api.repos.listStatusesForRef({ 
     owner, repo: repository, ref: headSha,
   });
+  logger('Build status is ', statuses.data[0].state);
   return statuses.data[0].state === 'success';
 }
 
@@ -218,12 +221,19 @@ async function findExistingReview({
   reviewAPI,
   reviewerLoginName,
 }) {
-  const existingReviews = await reviewAPI.pulls.listReviews({ owner, repo: repository, pull_number: pullNumber });
-  const reviews = existingReviews.data.filter(r => r.user.login === reviewerLoginName);
-  if (reviews.length !== 0) {
-    return reviews[0];
-  }
-  return undefined;
+    try {
+      const existingReviews = await reviewAPI.pulls.listReviews({ owner, repo: repository, pull_number: pullNumber });
+      const reviews = existingReviews.data.filter(r => r.user.login === reviewerLoginName);
+      if (reviews.length !== 0) {
+        return reviews[0];
+      }
+      return undefined;
+    } catch(e) {
+      if (e.status === 404) {
+        return undefined
+      }
+      throw e;
+    }
 }
 
 async function mergePR({

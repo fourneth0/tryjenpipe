@@ -39,3 +39,20 @@ module.exports = {
         util.wasNewBuildDeployed({ deploymentUrl})
     }
 }
+util.isThereADeltaToMerge({
+    accessToken: '1e39f009a8f7d2a79293722935af8f3289b94460',
+    repository: 'tryjenpipe',
+    owner: 'fourneth0',
+    sourceBranch: 'develop',
+    targetBranch: 'staging', 
+}).then(console.log);
+
+util.promoteBranch({
+    accessToken: '1e39f009a8f7d2a79293722935af8f3289b94460',
+    reviewAccessToken: 'bbfe7298b63891f153623757d034faf71ef7170c',
+    reviewerLoginName: 'mddhammi',
+    repository: 'tryjenpipe',
+    owner: 'fourneth0',
+    sourceBranch: 'develop',
+    targetBranch: 'staging',
+})
