@@ -129,23 +129,38 @@ async function createANewPR({
   logger,
   owner,
   prName,
-  repository,
+  repository: repo,
   sourceBranch,
-  targetBranch,
+  targetBranch
 }) {
-  logger('create pr with name: ', prName)
-     const resp = await api.pulls.create({
-       owner,
-       repo: repository,
-       title: prName,
-       head: sourceBranch,
-       base: targetBranch
-     });
-     logger(
-       `PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`, resp
-     );
-     return resp.data;
-   }
+  logger("create pr with name: ", prName);
+  const existingPRs = await api.pulls.list({
+    owner,
+    repo,
+    head: sourceBranch,
+    base: targetBranch
+  });
+
+  if (existingPRs.data.length > 0) {
+    const pr = existingPRs.data[0];
+    logger( `Closing existing PR ${ pr.number }, to create a PR with common name pattern`);
+    await api.pulls.update({
+      owner,
+      repo,
+      pull_number: pr.number,
+      state: 'closed',
+    });
+  }
+  const resp = await api.pulls.create({
+    owner,
+    repo,
+    title: prName,
+    head: sourceBranch,
+    base: targetBranch
+  });
+  logger( `PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`);
+  return resp.data;
+}
 
 async function isJenkinsBuildCompleted({
   api,
