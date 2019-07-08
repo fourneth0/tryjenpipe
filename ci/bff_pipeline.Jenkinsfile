@@ -23,10 +23,11 @@ pipeline {
         stage('Check for changes') {
            steps {
                 script {
+                    echo env.IS_MERGE_REQUIRED
                     env.IS_MERGE_REQUIRED = sh(script: '''
                             node -e "require('./ci/ci_util_integrator.js').isThereADeltaToMerge()"
                         ''', returnStdout: true).trim()
-
+                    echo env.IS_MERGE_REQUIRED
                     if (env.IS_MERGE_REQUIRED == 'false') {
                         echo 'Branch is upto date, end the build'
                         currentBuild.result = 'ABORTED'
