@@ -82,11 +82,11 @@ pipeline {
                 //     branch: env.TARGET_BRANCH, 
                 //     changelog: true
                 // sh 'npm install'
-        //         sh 'npm run test:integration:staging'
+                sh 'npm run test:integration:staging'
             }
-        //     // todo revert if integration failed,
-        //     // todo send notifications
-        // }
+           // todo revert if integration failed,
+           // todo send notifications
+        }
     }
     post {
         aborted {
