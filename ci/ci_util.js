@@ -25,6 +25,9 @@ async function promoteBranch(args) {
     logger = console.log,
   } = args;
 
+  if(!isThereADeltaToMerge({accessToken, owner, repository, sourceBranch, targetBranch})) {
+    throw Error('Branch is up to date. No changes to merge');
+  }
   const prName = createPrName({ sourceBranch, targetBranch });
 
   const api = apiKit({ auth: accessToken });
