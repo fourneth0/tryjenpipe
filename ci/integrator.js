@@ -1,4 +1,4 @@
-const util = require('./ci_util');
+const util = require('./util');
 
 const deploymentUrl = process.env.SERVER_URL;
 const accessToken = process.env.GIT_TOKEN;
@@ -39,13 +39,3 @@ module.exports = {
         util.wasNewBuildDeployed({ deploymentUrl})
     }
 }
-
-util.promoteBranch({
-    accessToken: 'fe24a51c533a0666ff00c7342f95089faec84e3b',
-            reviewAccessToken: '77f1454fd2460ca5545fead4eca6987309a4c863',
-            reviewerLoginName: 'mddhammi',
-            repository: 'tryjenpipe',
-            owner: 'fourneth0',
-            sourceBranch: 'develop',
-            targetBranch: 'staging',
-})

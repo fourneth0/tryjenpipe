@@ -25,7 +25,7 @@ pipeline {
                 script {
                     echo env.IS_MERGE_REQUIRED
                     env.IS_MERGE_REQUIRED = sh(script: '''
-                            node -e "require('./ci/ci_util_integrator.js').isThereADeltaToMerge()"
+                            node -e "require('./ci/integrator.js').isThereADeltaToMerge()"
                         ''', returnStdout: true).trim()
                     echo env.IS_MERGE_REQUIRED
                     if (env.IS_MERGE_REQUIRED == 'false') {
@@ -66,7 +66,7 @@ pipeline {
             steps {
                 sh (
                     label: 'running promote js task',
-                    script: '''node -e "require('./ci/ci_util_integrator.js').promoteBranch()" ''',
+                    script: '''node -e "require('./ci/integrator.js').promoteBranch()" ''',
                     returnStatus: true,
                     returnStdout: true
                 )
