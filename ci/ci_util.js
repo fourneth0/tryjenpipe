@@ -25,8 +25,8 @@ async function promoteBranch(args) {
     logger = console.log,
   } = args;
 
-  if(!isThereADeltaToMerge({accessToken, owner, repository, sourceBranch, targetBranch})) {
-    throw Error('Branch is up to date. No changes to merge');
+  if(!(await isThereADeltaToMerge({accessToken, owner, repository, sourceBranch, targetBranch}))) {
+    throw Error(`${sourceBranch} branch is up to date with ${targetBranch}.`);
   }
   const prName = createPrName({ sourceBranch, targetBranch });
 
@@ -67,7 +67,7 @@ async function isThereADeltaToMerge(args) {
     owner: owner,
     repo: repository,
   });
-  return response.data.status !== 'identical';
+  return !['ahead', 'identical'].includes(response.data.status);
 }
 
 /**
