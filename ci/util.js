@@ -35,7 +35,7 @@ async function promoteBranch(args) {
   logger(`Starting branch promotion. PR name: ${prName}`);
 
   const { number: pullNumber, head: { sha: headSha }, url } = await createANewPR({ api, logger, owner, prName, repository, sourceBranch, targetBranch });
-  await waitTillBuildComplete({ api, headSha, logger, owner, repository, timeout });
+  await waitTillBuildStatusAvailable({ api, headSha, logger, owner, repository, timeout });
   const isBuildSuccess = await isJenkinsBuildSuccess({ api, headSha, logger, owner, repository });
 
   if (isBuildSuccess) {
@@ -63,15 +63,17 @@ async function verifyADeltaPresent(args) {
  * 
  * @param {Object} options 
  */
-async function waitForBuildDeployed({ 
-  accessToken,
-  logger = console.log,
-  owner,
-  repository,
-  serverHealthUrl,
-  targetBranch, 
-  timeoutInMin = 7,
-}) {
+async function waitTillBuildIsDeployed(args) {
+  const { 
+    accessToken,
+    logger = console.log,
+    owner,
+    repository,
+    serverHealthUrl,
+    targetBranch, 
+    timeoutInMin = 7,
+  } = args;
+  validateInputs(args);
   const api = apiKit({ auth: accessToken });
   const { data: { object: { sha } } } = await api.git.getRef({ owner, repo: repository, ref: `heads/${targetBranch}` }) 
   const revision = sha.substring(0,7);
@@ -121,7 +123,7 @@ async function sleep(seconds) {
   return new Promise((resolve) => { setTimeout(resolve, seconds * 1000); });
 }
 
-async function waitTillBuildComplete({
+async function waitTillBuildStatusAvailable({
   api,
   headSha,
   logger,
@@ -131,11 +133,11 @@ async function waitTillBuildComplete({
 }) {
   let isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   while (!isBuildCompleted) {
-    logger(`build is not completed awaiting ${timeout} seconds`);
+    logger(`Build status is pending. Awaiting ${timeout} seconds`);
     await sleep(timeout);
     isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   }
-  logger('build status complete for sha', headSha);
+  logger('Build status is available for sha', headSha);
 }
 
 async function createANewPR({
@@ -170,10 +172,10 @@ async function isJenkinsBuildCompleted({
   const statuses = await api.repos.listStatusesForRef({ owner, repo: repository, ref: headSha });
   const hasBuildStatusRecorded = statuses.data.length > 0;
   if (!hasBuildStatusRecorded) {
-    console.log('Couldnt find build status for sha', headSha)
+    logger('Couldnt find build status for sha', headSha)
     return false;
   }
-  logger(`build status for sha ${headSha} is`, statuses);
+  logger(`build status for sha ${headSha} is`);
   return statuses.data[0].state !== 'pending';
 }
 
@@ -266,5 +268,5 @@ async function mergePR({
 module.exports = {
   verifyADeltaPresent,
   promoteBranch,
-  waitForBuildDeployed,
+  waitTillBuildIsDeployed,
 };

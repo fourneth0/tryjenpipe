@@ -57,7 +57,7 @@ pipeline {
         }
         stage('Wait for deployment to complete') {
             steps {
-                sh '''node -e "require('./ci/integrator.js').waitForBuildDeployed()" '''
+                sh '''node -e "require('./ci/integrator.js').waitTillBuildIsDeployed()" '''
             }
         }
         stage('Verify promoted deployment') {
@@ -70,21 +70,18 @@ pipeline {
                 sh 'npm run test:integration:staging'
             }
            // todo revert if integration failed,
-           // todo send notifications
         }
     }
     post {
         failure {
-            mail to: mjin8040@sysco.com, subject: ‘The Pipeline failure :(‘
-            emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}",
-                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
+            mail to: 'mjin8040@sysco.com',
+                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}",
+                body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
         } 
         success {
-             mail to: mjin8040@sysco.com, subject: ‘The Pipeline success :)‘
-             emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}",
-                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
+             mail to: 'mjin8040@sysco.com', 
+                  subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}",
+                  body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
         }
     }
 }

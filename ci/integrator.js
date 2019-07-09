@@ -35,8 +35,8 @@ module.exports = {
         })
     },
 
-    wasNewBuildDeployed: () => {
-        util.wasNewBuildDeployed({
+    waitTillBuildIsDeployed: () => {
+        util.waitTillBuildIsDeployed({
             accessToken,
             owner,
             repository,
