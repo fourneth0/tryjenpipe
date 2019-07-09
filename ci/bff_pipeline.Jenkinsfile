@@ -75,7 +75,7 @@ pipeline {
     post {
         failure {
             mail to: 'mjin8040@sysco.com',
-               
+                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}",
                 body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
         } 
         success {
