@@ -2,7 +2,7 @@ pipeline {
 	agent any
 	environment {
         REPO_URL = 'https://github.com/fourneth0/tryjenpipe.git'
-		SERVER_URL = 'https://deployment.com/health'
+		SERVER_HEALTH_URL = 'https://deployment.com/health'
         GIT_TOKEN = credentials('git-access-token')
         GIT_PR_REVIEW_TOKEN = credentials('git-pr-review-token')
         REPO_OWNER = 'fourneth0'
@@ -22,66 +22,51 @@ pipeline {
     stages {
         stage('Check for changes') {
            steps {
-                script {
-                    echo env.IS_MERGE_REQUIRED
-                    env.IS_MERGE_REQUIRED = sh(script: '''
-                            node -e "require('./ci/integrator.js').isThereADeltaToMerge()"
-                        ''', returnStdout: true).trim()
-                    echo env.IS_MERGE_REQUIRED
-                    if (env.IS_MERGE_REQUIRED == 'false') {
-                        echo 'Branch is upto date, end the build'
-                        currentBuild.result = 'ABORTED'
-                        error('No SCM changes')
-                        return
-                    }
+                catchError(message: "No Code Changes, skip the build', ", buildResult: 'UNSTABLE') {
+                    sh ''' node -e "require('./ci/integrator.js').verifyADeltaPresent()" '''
                 }
-                }
-        }
-        // stage('Assert target env') { // to make sure deployed staging is working as expected
-        //     // assert sta by running regression suit from staging branch to make sure staging is still functioning
-        //    steps {
-        //         git url: env.REPO_URL,
-        //             credentialsId: env.ACCESS_TOKEN,
-        //             branch: env.TARGET_BRANCH,
-        //             changelog: true
-        //         sh 'npm install'
-        //         sh 'npm run test:integration:staging'
-        //    }
-        // }
-
-        // stage('Verify QA') { // assume develop is already deployed to QA
-        //     // verify QA by run regression suit from develop branch
-        //    steps {
-        //         git url: env.REPO_URL,
-        //             credentialsId: env.ACCESS_TOKEN,
-        //             branch: env.SOURCE_BRANCH,
-        //             changelog: true
-        //         sh 'npm install'
-        //         // sh 'npm test'
-        //         sh 'npm run test:integration:qa'
-        //    }
-        // }
-
-        stage('prmote to stag') {
-            steps {
-                sh (
-                    label: 'running promote js task',
-                    script: '''node -e "require('./ci/integrator.js').promoteBranch()" ''',
-                    returnStatus: true,
-                    returnStdout: true
-                )
             }
         }
+        stage('Assert target env') {
+           steps {
+                git url: env.REPO_URL,
+                    credentialsId: env.ACCESS_TOKEN,
+                    branch: env.TARGET_BRANCH,
+                    changelog: true
+                sh 'npm install'
+                sh 'npm run test:integration:$SOURCE_BRANCH'
+           }
+        }
 
+        stage('Verify source branch') {
+           steps {
+                git url: env.REPO_URL,
+                    credentialsId: env.ACCESS_TOKEN,
+                    branch: env.SOURCE_BRANCH,
+                    changelog: true
+                sh 'npm install'
+                sh 'npm test'
+                sh 'npm run test:integration:$TARGET_BRANCH'
+           }
+        }
 
-        stage('Verify staging promosion') {
-            
+        stage('Promote to target environment') {
             steps {
-                // git url: env.REPO_URL, 
-                //     credentialsId: env.ACCESS_TOKEN, 
-                //     branch: env.TARGET_BRANCH, 
-                //     changelog: true
-                // sh 'npm install'
+                sh '''node -e "require('./ci/integrator.js').promoteBranch()" '''
+            }
+        }
+        stage('Wait for deployment to complete') {
+            steps {
+                sh '''node -e "require('./ci/integrator.js').waitForBuildDeployed()" '''
+            }
+        }
+        stage('Verify promoted deployment') {
+            steps {
+                git url: env.REPO_URL, 
+                    credentialsId: env.ACCESS_TOKEN, 
+                    branch: env.TARGET_BRANCH, 
+                    changelog: true
+                sh 'npm install'
                 sh 'npm run test:integration:staging'
             }
            // todo revert if integration failed,
@@ -89,8 +74,8 @@ pipeline {
         }
     }
     post {
-        aborted {
-            echo 'Build aborted, no scm changes'
+        failed {
+            echo 'Build failed.'
         }
     }
 }
