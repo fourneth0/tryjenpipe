@@ -2,7 +2,7 @@ const util = require('../ci_util');
 
 it(' check for failures', async () => {
     try {
-        await util.isThereADeltaToMerge();
+        await util.verifyChanges();
         fail()
     } catch(e) {
         expect(e).toBeDefined();
@@ -10,5 +10,5 @@ it(' check for failures', async () => {
 });
 
 it(' check for success', async () => {
-        await util.isThereADeltaToMerge({});
+        await util.verifyChanges({});
 });
