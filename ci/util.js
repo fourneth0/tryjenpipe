@@ -63,7 +63,7 @@ async function verifyADeltaPresent(args) {
  * 
  * @param {Object} options 
  */
-async function waitForBuildDeployed({ 
+async function waitTillBuildIsDeployed({ 
   accessToken,
   logger = console.log,
   owner,
@@ -266,5 +266,5 @@ async function mergePR({
 module.exports = {
   verifyADeltaPresent,
   promoteBranch,
-  waitForBuildDeployed,
+  waitTillBuildIsDeployed,
 };
