@@ -63,15 +63,17 @@ async function verifyADeltaPresent(args) {
  * 
  * @param {Object} options 
  */
-async function waitTillBuildIsDeployed({ 
-  accessToken,
-  logger = console.log,
-  owner,
-  repository,
-  serverHealthUrl,
-  targetBranch, 
-  timeoutInMin = 7,
-}) {
+async function waitTillBuildIsDeployed(args) {
+  const { 
+    accessToken,
+    logger = console.log,
+    owner,
+    repository,
+    serverHealthUrl,
+    targetBranch, 
+    timeoutInMin = 7,
+  } = args;
+  validateInputs(args);
   const api = apiKit({ auth: accessToken });
   const { data: { object: { sha } } } = await api.git.getRef({ owner, repo: repository, ref: `heads/${targetBranch}` }) 
   const revision = sha.substring(0,7);
@@ -170,10 +172,10 @@ async function isJenkinsBuildCompleted({
   const statuses = await api.repos.listStatusesForRef({ owner, repo: repository, ref: headSha });
   const hasBuildStatusRecorded = statuses.data.length > 0;
   if (!hasBuildStatusRecorded) {
-    console.log('Couldnt find build status for sha', headSha)
+    logger('Couldnt find build status for sha', headSha)
     return false;
   }
-  logger(`build status for sha ${headSha} is`, statuses);
+  logger(`build status for sha ${headSha} is`);
   return statuses.data[0].state !== 'pending';
 }
 
