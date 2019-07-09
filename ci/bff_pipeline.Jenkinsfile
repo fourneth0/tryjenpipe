@@ -70,17 +70,17 @@ pipeline {
                 sh 'npm run test:integration:staging'
             }
            // todo revert if integration failed,
-           // todo send notifications
         }
     }
     post {
         failure {
             mail to: 'mjin8040@sysco.com',
-                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
+               
                 body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
         } 
         success {
-             mail to: 'mjin8040@sysco.com', subject: 'The Pipeline success :)', 
+             mail to: 'mjin8040@sysco.com', 
+                  subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}",
                   body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
         }
     }
