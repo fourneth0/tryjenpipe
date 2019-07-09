@@ -70,7 +70,7 @@ async function waitForBuildDeployed({
   repository,
   serverHealthUrl,
   targetBranch, 
-  timeout = 10,
+  timeoutInMin = 7,
 }) {
   const api = apiKit({ auth: accessToken });
   const { data: { object: { sha } } } = await api.git.getRef({ owner, repo: repository, ref: `heads/${targetBranch}` }) 
@@ -78,7 +78,11 @@ async function waitForBuildDeployed({
   assert(revision);
 
   let healthResp;
+  const startTime = Date.now();
   do  {
+    if (Date.now() - startTime > timeoutInMin * 60 * 1000) {
+      throw Error(`Build was not deployed during the expected window of ${timeoutInMin} min.`)
+    }
     logger(`wait till deployment complete with revision ${revision}`);
     await sleep(timeout);
     healthResp = await rq.get(serverHealthUrl);

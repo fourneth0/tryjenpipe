@@ -57,9 +57,7 @@ pipeline {
         }
         stage('Wait for deployment to complete') {
             steps {
-                timeout(5, 'MINUTES') {
-                    sh '''node -e "require('./ci/integrator.js').waitForBuildDeployed()" '''
-                }
+                sh '''node -e "require('./ci/integrator.js').waitForBuildDeployed()" '''
             }
         }
         stage('Verify promoted deployment') {
