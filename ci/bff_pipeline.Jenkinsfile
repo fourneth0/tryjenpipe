@@ -23,7 +23,7 @@ pipeline {
         stage('Check for changes') {
            steps {
                 catchError(message: "No Code Changes, skip the build', ", buildResult: 'UNSTABLE') {
-                    sh ''' node -e "require('./ci/integrator.js').verifyADeltaPresent()" '''
+                    sh ''' node -e "require('./ci/integrator.js').isMergeRequired()" '''
                 }
             }
         }

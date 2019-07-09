@@ -1,4 +1,5 @@
 const util = require('./util');
+const { waitTillBuildIsDeployed } = require('./waitTillBuildIsDeployed');
 
 const serverHealthUrl = process.env.SERVER_HEALTH_URL;
 const accessToken = process.env.GIT_TOKEN;
@@ -25,8 +26,8 @@ module.exports = {
         })
     },
 
-    verifyADeltaPresent: () => {
-        util.verifyADeltaPresent({
+    isMergeRequired: () => {
+        util.isMergeRequired({
             accessToken,
             owner,
             repository,
@@ -36,7 +37,7 @@ module.exports = {
     },
 
     waitTillBuildIsDeployed: () => {
-        util.waitTillBuildIsDeployed({
+        waitTillBuildIsDeployed({
             accessToken,
             owner,
             repository,

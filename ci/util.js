@@ -25,7 +25,7 @@ async function promoteBranch(args) {
     logger = console.log,
   } = args;
 
-  verifyADeltaPresent({accessToken, owner, repository, sourceBranch, targetBranch});
+  isMergeRequired({accessToken, owner, repository, sourceBranch, targetBranch});
 
   const prName = createPrName({ sourceBranch, targetBranch });
 
@@ -49,7 +49,7 @@ async function promoteBranch(args) {
 /**
  * returns true if there is a different between given branch
  */
-async function verifyADeltaPresent(args) {
+async function isMergeRequired(args) {
   const { accessToken, owner, repository, sourceBranch, targetBranch } = args; validateInputs(args);
   const api = apiKit({ auth: accessToken });
   const response = await api.repos.compareCommits({ base: sourceBranch, head: targetBranch, owner: owner, repo: repository });
@@ -58,40 +58,6 @@ async function verifyADeltaPresent(args) {
   }
 }
 
-/**
- * Wait till deployed version equals to target branch head.
- * 
- * @param {Object} options 
- */
-async function waitTillBuildIsDeployed(args) {
-  const { 
-    accessToken,
-    logger = console.log,
-    owner,
-    repository,
-    serverHealthUrl,
-    targetBranch, 
-    timeoutInMin = 7,
-  } = args;
-  validateInputs(args);
-  const api = apiKit({ auth: accessToken });
-  const { data: { object: { sha } } } = await api.git.getRef({ owner, repo: repository, ref: `heads/${targetBranch}` }) 
-  const revision = sha.substring(0,7);
-  assert(revision);
-
-  let healthResp;
-  const startTime = Date.now();
-  do  {
-    if (Date.now() - startTime > timeoutInMin * 60 * 1000) {
-      throw Error(`Build was not deployed during the expected window of ${timeoutInMin} min.`)
-    }
-    logger(`wait till deployment complete with revision ${revision}`);
-    await sleep(timeout);
-    healthResp = await rq.get(serverHealthUrl);
-    assert(healthResp.hash);
-    logger(`Current deployed version is ${healthResp.hash}, expected ${revision}`)
-  } while(revision !== healthResp.hash)
-}
 
 //
 // private functions
@@ -262,11 +228,7 @@ async function mergePR({
   logger('PR merged', pullNumber, headSha);
 }
 
-
-
-
 module.exports = {
-  verifyADeltaPresent,
+  isMergeRequired,
   promoteBranch,
-  waitTillBuildIsDeployed,
 };
