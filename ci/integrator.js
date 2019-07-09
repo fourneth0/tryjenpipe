@@ -1,6 +1,6 @@
-const util = require('./ci_util');
+const util = require('./util');
 
-const deploymentUrl = process.env.SERVER_URL;
+const serverHealthUrl = process.env.SERVER_HEALTH_URL;
 const accessToken = process.env.GIT_TOKEN;
 const reviewAccessToken = process.env.GIT_PR_REVIEW_TOKEN;
 const owner = process.env.REPO_OWNER;
@@ -9,7 +9,8 @@ const sourceBranch = process.env.SOURCE_BRANCH;
 const targetBranch = process.env.TARGET_BRANCH;
 const reviewerLoginName = process.env.REVIEWER_LOGIN_NAME;
 
-console.log('util ', util);
+// crash the process in case of an error
+process.on('unhandledRejection', up => { console.error(up); process.exit(1) })
 
 module.exports = {
     promoteBranch: () => {
@@ -24,8 +25,8 @@ module.exports = {
         })
     },
 
-    isThereADeltaToMerge: () => {
-        util.isThereADeltaToMerge({
+    verifyADeltaPresent: () => {
+        util.verifyADeltaPresent({
             accessToken,
             owner,
             repository,
@@ -35,6 +36,12 @@ module.exports = {
     },
 
     wasNewBuildDeployed: () => {
-        util.wasNewBuildDeployed({ deploymentUrl})
+        util.wasNewBuildDeployed({
+            accessToken,
+            owner,
+            repository,
+            serverHealthUrl,
+            targetBranch,
+        })
     }
 }

@@ -25,6 +25,8 @@ async function promoteBranch(args) {
     logger = console.log,
   } = args;
 
+  verifyADeltaPresent({accessToken, owner, repository, sourceBranch, targetBranch});
+
   const prName = createPrName({ sourceBranch, targetBranch });
 
   const api = apiKit({ auth: accessToken });
@@ -32,10 +34,9 @@ async function promoteBranch(args) {
 
   logger(`Starting branch promotion. PR name: ${prName}`);
 
-  const { id: pullNumber, head: { sha: headSha }, url }
-    = await createPR({ api, logger, owner, prName, repository, sourceBranch, targetBranch });
+  const { number: pullNumber, head: { sha: headSha }, url } = await createANewPR({ api, logger, owner, prName, repository, sourceBranch, targetBranch });
   await waitTillBuildComplete({ api, headSha, logger, owner, repository, timeout });
-  const isBuildSuccess = await isJenkinsBuildSuccess({ api, headSha, owner, repository });
+  const isBuildSuccess = await isJenkinsBuildSuccess({ api, headSha, logger, owner, repository });
 
   if (isBuildSuccess) {
     await approveAndMerge({ headSha, logger, owner, pullNumber, repository, reviewAPI, reviewerLoginName, sourceBranch, targetBranch });
@@ -48,33 +49,46 @@ async function promoteBranch(args) {
 /**
  * returns true if there is a different between given branch
  */
-async function isThereADeltaToMerge(args) {
-  const {
-    accessToken,
-    owner,
-    repository,
-    sourceBranch,
-    targetBranch
-  } = args;
-  validateInputs(args);
+async function verifyADeltaPresent(args) {
+  const { accessToken, owner, repository, sourceBranch, targetBranch } = args; validateInputs(args);
   const api = apiKit({ auth: accessToken });
-  const response = await api.repos.compareCommits({
-    base: sourceBranch,
-    head: targetBranch,
-    owner: owner,
-    repo: repository,
-  });
-  return response.data.status !== 'identical';
+  const response = await api.repos.compareCommits({ base: sourceBranch, head: targetBranch, owner: owner, repo: repository });
+  if (['ahead', 'identical'].includes(response.data.status)) {
+    throw Error(`${sourceBranch} branch is up to date with ${targetBranch}.`);
+  }
 }
 
 /**
- * Check whether the deployment is completed.
+ * Wait till deployed version equals to target branch head.
+ * 
+ * @param {Object} options 
  */
-async function wasNewBuildDeployed(args) {
-  const { deploymentUrl } = args;
-  validateInputs()
-  const resp = await rq.get(deploymentUrl);
-  return resp.timestamp > (Date.now() - (10 * 60 * 1000)); // deployed during last 10 mins
+async function waitForBuildDeployed({ 
+  accessToken,
+  logger = console.log,
+  owner,
+  repository,
+  serverHealthUrl,
+  targetBranch, 
+  timeoutInMin = 7,
+}) {
+  const api = apiKit({ auth: accessToken });
+  const { data: { object: { sha } } } = await api.git.getRef({ owner, repo: repository, ref: `heads/${targetBranch}` }) 
+  const revision = sha.substring(0,7);
+  assert(revision);
+
+  let healthResp;
+  const startTime = Date.now();
+  do  {
+    if (Date.now() - startTime > timeoutInMin * 60 * 1000) {
+      throw Error(`Build was not deployed during the expected window of ${timeoutInMin} min.`)
+    }
+    logger(`wait till deployment complete with revision ${revision}`);
+    await sleep(timeout);
+    healthResp = await rq.get(serverHealthUrl);
+    assert(healthResp.hash);
+    logger(`Current deployed version is ${healthResp.hash}, expected ${revision}`)
+  } while(revision !== healthResp.hash)
 }
 
 //
@@ -115,65 +129,63 @@ async function waitTillBuildComplete({
   repository,
   timeout
 }) {
-  let isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, owner, repository });
+  let isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   while (!isBuildCompleted) {
     logger(`build is not completed awaiting ${timeout} seconds`);
     await sleep(timeout);
-    isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, owner, repository });
+    isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   }
-  logger('build status found.');
+  logger('build status complete for sha', headSha);
 }
 
-async function createPR({
+async function createANewPR({
   api,
   logger,
   owner,
   prName,
-  repository,
+  repository: repo,
   sourceBranch,
-  targetBranch,
+  targetBranch
 }) {
-  // create PR https://developer.github.com/v3/pulls/#create-a-pull-request
-  try {
-    const resp = await api.pulls.create({
-      owner,
-      repo: repository,
-      title: prName,
-      head: sourceBranch,
-      base: targetBranch
-    });
-    logger(`PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`);
-    return resp.data;
-  } catch(e) {
-    throw Error('PR Creation failed', e);
+  logger("create pr with name: ", prName);
+  const existingPRs = await api.pulls.list({ owner, repo, head: sourceBranch, base: targetBranch });
+
+  if (existingPRs.data.length > 0) {
+    const pr = existingPRs.data[0];
+    logger( `Closing existing PR ${ pr.number }, to create a PR with common name pattern`);
+    await api.pulls.update({ owner, repo, pull_number: pr.number, state: 'closed' });
   }
+  const resp = await api.pulls.create({ owner, repo, title: prName, head: sourceBranch, base: targetBranch });
+  logger( `PR(${resp.data.id}) ${prName}'s head is at ${resp.data.head.sha}`);
+  return resp.data;
 }
 
 async function isJenkinsBuildCompleted({
   api,
   headSha,
+  logger,
   owner,
   repository,
 }) {
-  const statuses = await api.repos.listStatusesForRef({ 
-    owner, repo: repository, ref: headSha,
-  });
+  const statuses = await api.repos.listStatusesForRef({ owner, repo: repository, ref: headSha });
   const hasBuildStatusRecorded = statuses.data.length > 0;
   if (!hasBuildStatusRecorded) {
+    console.log('Couldnt find build status for sha', headSha)
     return false;
   }
+  logger(`build status for sha ${headSha} is`, statuses);
   return statuses.data[0].state !== 'pending';
 }
 
 async function isJenkinsBuildSuccess({
   api,
   headSha,
+  logger,
   owner,
   repository,
 }) {
-  const statuses = await api.repos.listStatusesForRef({ 
-    owner, repo: repository, ref: headSha,
-  });
+  const statuses = await api.repos.listStatusesForRef({ owner, repo: repository, ref: headSha });
+  logger('Build status is ', statuses.data[0].state);
   return statuses.data[0].state === 'success';
 }
 
@@ -185,16 +197,12 @@ async function approvePR({
   reviewAPI,
   reviewerLoginName,
 }) {
-  const existingReview = await findExistingReview({ 
-    owner, pullNumber, repo: repository, reviewAPI, reviewerLoginName 
-  });
+  const existingReview = await findExistingReview({ owner, pullNumber, repository, reviewAPI, reviewerLoginName });
   let reviewId;
   if (!existingReview) {
     // https://developer.github.com/v3/pulls/reviews/#create-a-pull-request-review
     logger('creating a review');
-    const review = await reviewAPI.pulls.createReview({ 
-      owner, repo: repository, pull_number: pullNumber,
-    });
+    const review = await reviewAPI.pulls.createReview({ owner, repo: repository, pull_number: pullNumber });
     reviewId = review.data.id;
     logger('a review created with id', reviewId);
   } else {
@@ -206,9 +214,7 @@ async function approvePR({
     }
   }
   logger(`Approving the PR ${pullNumber}. ReviewId: ${reviewId}`);
-  await reviewAPI.pulls.submitReview({ 
-    owner, repo: repository, pull_number: pullNumber, review_id: reviewId, event: 'APPROVE',
-  });
+  await reviewAPI.pulls.submitReview({ owner, repo: repository, pull_number: pullNumber, review_id: reviewId, event: 'APPROVE' });
 }
 
 async function findExistingReview({
@@ -218,12 +224,19 @@ async function findExistingReview({
   reviewAPI,
   reviewerLoginName,
 }) {
-  const existingReviews = await reviewAPI.pulls.listReviews({ owner, repo: repository, pull_number: pullNumber });
-  const reviews = existingReviews.data.filter(r => r.user.login === reviewerLoginName);
-  if (reviews.length !== 0) {
-    return reviews[0];
-  }
-  return undefined;
+    try {
+      const existingReviews = await reviewAPI.pulls.listReviews({ owner, repo: repository, pull_number: pullNumber });
+      const reviews = existingReviews.data.filter(r => r.user.login === reviewerLoginName);
+      if (reviews.length !== 0) {
+        return reviews[0];
+      }
+      return undefined;
+    } catch(e) {
+      if (e.status === 404) {
+        return undefined
+      }
+      throw e;
+    }
 }
 
 async function mergePR({
@@ -249,8 +262,9 @@ async function mergePR({
 
 
 
+
 module.exports = {
-  isThereADeltaToMerge,
+  verifyADeltaPresent,
   promoteBranch,
-  wasNewBuildDeployed,
+  waitForBuildDeployed,
 };

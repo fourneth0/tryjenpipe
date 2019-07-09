@@ -10,6 +10,7 @@
     "test:supertest": "echo 'supertest'",
     "test:integration:local": "echo 'local integration tests'",
     "test:integration:qa": "echo 'qa integration tests'",
+    "test:integration:develop": "echo 'qa integration tests'",
     "test:integration:staging": "echo 'staging integration tests'"
   },
   "repository": {
