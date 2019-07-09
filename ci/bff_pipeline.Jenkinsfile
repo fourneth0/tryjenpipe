@@ -75,7 +75,16 @@ pipeline {
     }
     post {
         failure {
-            echo 'Build failed.'
+            mail to: mjin8040@sysco.com, subject: ‘The Pipeline failure :(‘
+            emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}",
+                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
+        } 
+        success {
+             mail to: mjin8040@sysco.com, subject: ‘The Pipeline success :)‘
+             emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}",
+                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
         }
     }
 }
