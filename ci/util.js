@@ -35,7 +35,7 @@ async function promoteBranch(args) {
   logger(`Starting branch promotion. PR name: ${prName}`);
 
   const { number: pullNumber, head: { sha: headSha }, url } = await createANewPR({ api, logger, owner, prName, repository, sourceBranch, targetBranch });
-  await waitTillBuildComplete({ api, headSha, logger, owner, repository, timeout });
+  await waitTillBuildStatusAvailable({ api, headSha, logger, owner, repository, timeout });
   const isBuildSuccess = await isJenkinsBuildSuccess({ api, headSha, logger, owner, repository });
 
   if (isBuildSuccess) {
@@ -121,7 +121,7 @@ async function sleep(seconds) {
   return new Promise((resolve) => { setTimeout(resolve, seconds * 1000); });
 }
 
-async function waitTillBuildComplete({
+async function waitTillBuildStatusAvailable({
   api,
   headSha,
   logger,
@@ -131,11 +131,11 @@ async function waitTillBuildComplete({
 }) {
   let isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   while (!isBuildCompleted) {
-    logger(`build is not completed awaiting ${timeout} seconds`);
+    logger(`Build status is pending. Awaiting ${timeout} seconds`);
     await sleep(timeout);
     isBuildCompleted = await isJenkinsBuildCompleted({ api, headSha, logger, owner, repository });
   }
-  logger('build status complete for sha', headSha);
+  logger('Build status is available for sha', headSha);
 }
 
 async function createANewPR({
