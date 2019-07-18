@@ -6,8 +6,10 @@ pipeline {
     
     stages {
         stage('setup connectors') {
-            script{ 
-                pullRequest.setCredentials('username', 'password')
+             steps {
+                script{ 
+                    pullRequest.setCredentials('username', 'password')
+                }
             }
         }
         stage('dep install') {
