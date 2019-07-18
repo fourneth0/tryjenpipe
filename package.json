@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo 'Error: no test specified'",
     "lint": "echo 'linting'",
     "test:unit": "echo 'unit testing'",
     "test:supertest": "echo 'supertest'",
     "test:integration:local": "echo 'local integration tests'",
     "test:integration:qa": "echo 'qa integration tests'",
+    "test:integration:develop": "echo 'qa integration tests'",
     "test:integration:staging": "echo 'staging integration tests'"
   },
   "repository": {

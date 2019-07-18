@@ -5,6 +5,13 @@ pipeline {
     tools {nodejs "node"}
     
     stages {
+        stage('setup connectors') {
+             steps {
+                script{ 
+                    pullRequest.setCredentials('username', 'password')
+                }
+            }
+        }
         stage('dep install') {
             steps {
                 sh 'npm install'
