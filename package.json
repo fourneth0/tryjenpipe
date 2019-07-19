@@ -1,0 +1,34 @@
+{
+  "name": "tryjenpipe",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'Error: no test specified'",
+    "lint": "echo 'linting'",
+    "test:unit": "echo 'unit testing'",
+    "test:supertest": "echo 'supertest'",
+    "test:integration:local": "echo 'local integration tests'",
+    "test:integration:qa": "echo 'qa integration tests'",
+    "test:integration:develop": "echo 'qa integration tests'",
+    "test:integration:staging": "echo 'staging integration tests'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fourneth0/tryjenpipe.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fourneth0/tryjenpipe/issues"
+  },
+  "homepage": "https://github.com/fourneth0/tryjenpipe#readme",
+  "devDependencies": {
+    "@octokit/rest": "^16.28.2",
+    "jest": "^24.8.0"
+  },
+  "dependencies": {
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4"
+  }
+}
